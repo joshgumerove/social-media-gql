@@ -1,14 +1,26 @@
 import { Context } from "../..";
 
+interface SignupArgs {
+  email: string;
+  name: string;
+  password: string;
+  bio: string;
+}
+
 export const authResolvers = {
-  signup: (
+  signup: async (
     _: any,
-    {
-      email,
-      name,
-      password,
-      bio,
-    }: { email: string; name: string; password: string; bio: string },
+    { email, name, password, bio }: SignupArgs,
     { prisma }: Context
-  ) => {},
+  ) => {
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        name,
+        password,
+      },
+    });
+
+    return newUser;
+  },
 };
