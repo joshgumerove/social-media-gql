@@ -58,13 +58,13 @@ export const authResolvers = {
         password: hashedPassword,
       },
     });
-    // const newUser = await prisma.user.create({
-    //   data: {
-    //     email,
-    //     name,
-    //     password,
-    //   },
-    // });
+
+    await prisma.profile.create({
+      data: {
+        userId: user.id,
+        bio: bio,
+      },
+    });
 
     const token = await JWT.sign(
       {
