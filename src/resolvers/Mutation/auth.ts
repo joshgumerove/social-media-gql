@@ -1,6 +1,8 @@
 import { Context } from "../..";
 import validator from "validator";
 import bcrypt from "bcryptjs";
+import JWT from "jsonwebtoken";
+import { JSON_SIGNATURE } from "../../keys";
 
 interface SignupArgs {
   email: string;
@@ -11,7 +13,7 @@ interface SignupArgs {
 
 interface UserPayload {
   userErrors: { message: string }[];
-  user: null;
+  token: string | null;
 }
 
 export const authResolvers = {
@@ -25,7 +27,7 @@ export const authResolvers = {
     if (!Boolean(isEmail)) {
       return {
         userErrors: [{ message: "must provide a valid email" }],
-        user: null,
+        token: null,
       };
     }
 
@@ -36,19 +38,20 @@ export const authResolvers = {
     if (!Boolean(isValidPassword)) {
       return {
         userErrors: [{ message: "password must be at least 5 characters" }],
-        user: null,
+        token: null,
       };
     }
 
     if (!Boolean(name.trim()) || !Boolean(bio.trim())) {
       return {
         userErrors: [{ message: "must provide a name and bio" }],
-        user: null,
+        token: null,
       };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.user.create({
+
+    const user = await prisma.user.create({
       data: {
         email,
         name,
@@ -63,9 +66,20 @@ export const authResolvers = {
     //   },
     // });
 
+    const token = await JWT.sign(
+      {
+        userId: user.id,
+        email: user.email,
+      },
+      JSON_SIGNATURE,
+      {
+        expiresIn: 360000,
+      }
+    );
+
     return {
       userErrors: [],
-      user: null,
+      token: token,
     };
   },
 };
