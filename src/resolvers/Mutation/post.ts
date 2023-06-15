@@ -17,9 +17,18 @@ export const postResolvers = {
   postCreate: async (
     _: any,
     { post: input }: PostArgs,
-    { prisma }: Context
+    { prisma, userInfo }: Context
   ): Promise<PostPayloadType> => {
     const { title, content } = input;
+
+    console.log("what in the world is the user info: ", userInfo);
+
+    if (!userInfo) {
+      return {
+        userErrors: [{ message: "Forbidden access (unauthenticated)" }],
+        post: null,
+      };
+    }
 
     if (!title || !content) {
       return {
@@ -36,7 +45,7 @@ export const postResolvers = {
       data: {
         title,
         content,
-        authorId: 1,
+        authorId: userInfo.userId,
       },
     });
 
