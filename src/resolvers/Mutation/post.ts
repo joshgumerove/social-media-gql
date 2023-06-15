@@ -1,5 +1,6 @@
 import { Post } from "@prisma/client";
 import { Context } from "../..";
+import { canUserMutatePost } from "../../utils/canUserMutatePost";
 
 interface PostArgs {
   post: {
@@ -20,8 +21,6 @@ export const postResolvers = {
     { prisma, userInfo }: Context
   ): Promise<PostPayloadType> => {
     const { title, content } = input;
-
-    console.log("what in the world is the user info: ", userInfo);
 
     if (!userInfo) {
       return {
@@ -59,8 +58,23 @@ export const postResolvers = {
     { postId, post }: { postId: string; post: PostArgs["post"] }, // NOTE: can inline the type definition
     context: Context
   ): Promise<PostPayloadType> => {
-    const { prisma } = context;
+    const { prisma, userInfo } = context;
     const { title, content } = post;
+
+    if (!userInfo) {
+      return {
+        userErrors: [{ message: "Forbidden access (unauthenticated)" }],
+        post: null,
+      };
+    }
+
+    const error = await canUserMutatePost({
+      userId: userInfo.userId,
+      postId: Number(postId),
+      prisma,
+    });
+
+    if (error) return error;
 
     if (title || content) {
       const existingPost = await prisma.post.findUnique({
@@ -96,11 +110,26 @@ export const postResolvers = {
   postDelete: async (
     _: any,
     { postId }: { postId: string },
-    { prisma }: Context
+    { prisma, userInfo }: Context
   ): Promise<PostPayloadType> => {
     const post = await prisma.post.findUnique({
       where: { id: Number(postId) },
     });
+
+    if (!userInfo) {
+      return {
+        userErrors: [{ message: "Forbidden access (unauthenticated)" }],
+        post: null,
+      };
+    }
+
+    const error = await canUserMutatePost({
+      userId: userInfo.userId,
+      postId: Number(postId),
+      prisma,
+    });
+
+    if (error) return error;
 
     if (!Boolean(post)) {
       return {
