@@ -12,6 +12,17 @@ const Query = {
       },
     });
   },
+  profile: async (
+    _: any,
+    { userId }: { userId: string },
+    { prisma }: Context
+  ) => {
+    return await prisma.profile.findUnique({
+      where: {
+        userId: Number(userId),
+      },
+    });
+  },
   posts: async (_: any, __: any, context: Context): Promise<Post[]> => {
     const { prisma } = context;
 
