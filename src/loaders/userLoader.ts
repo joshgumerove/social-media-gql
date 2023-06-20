@@ -1,26 +1,26 @@
 import DataLoader from "dataloader";
 import { User } from "@prisma/client";
-import { prisma } from '..'
+import { prisma } from "..";
 
-type BatchUser = (ids: number[]) => Promise<User[]>
+type BatchUser = (ids: number[]) => Promise<User[]>;
 
 const batchUsers: BatchUser = async (ids) => {
-    const users = await prisma.user.findMany({
-        where: {
-            id: {
-                in: ids
-            }
-        }
-    })
+  const users = await prisma.user.findMany({
+    where: {
+      id: {
+        in: ids,
+      },
+    },
+  });
 
-    const userMap: {[key: string]: User} = {}
+  const userMap: { [key: string]: User } = {};
 
-    users.forEach(user => {
-        userMap[user.id] = user
-    })
+  users.forEach((user) => {
+    userMap[user.id] = user;
+  });
 
-    return ids.map(id => userMap[id])
-}
+  return ids.map((id) => userMap[id]);
+};
 
 //@ts-ignore
-export const userLoader = new DataLoader<number, User>(batchUsers)
+export const userLoader = new DataLoader<number, User>(batchUsers);
